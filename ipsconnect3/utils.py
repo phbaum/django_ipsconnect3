@@ -25,7 +25,16 @@ def request_login(id_type, uid, password):
         'password': password_hash,
     })
 
-def request_check(username, displayname, email):
+def request_check(username='', displayname='', email=''):
+    """
+    Checks with the IPS Connect master application for duplicate values
+    of username, displayname and email.
+    
+    Note that the IPS documentation is wrong in this respect
+    - If the value provided is free, the result will be True
+    - If the value provided is taken, the result will be False
+    - If no value was provided at all, the result is None
+    """
     key = settings.IPSCONNECT3_KEY
     return request_base({
         'act':          'check',
@@ -35,13 +44,31 @@ def request_check(username, displayname, email):
         'email':        email,
     })
 
-def request_register():
+def request_register(username, displayname, email, password, revalidateurl=''):
     key = settings.IPSCONNECT3_KEY
+    password_hash = hashlib.md5(password).hexdigest()
     return request_base({
         'act': 'register',
         'key':  key,
+        'username': username,
+        'displayname': displayname,
+        'email': email,
+        'password': password_hash,
+        'revalidateurl': revalidateurl,
     })
 
+def request_validate(uid):
+    return request_base({
+        'act': 'validate',
+        'key': get_user_key_hash(uid),
+        'id': uid,
+    })
+    
+def request_change():
+    pass
+    
+def request_delete():
+    pass
 
 #
 # HTTP Redirects

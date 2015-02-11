@@ -3,17 +3,24 @@ from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
-from django.contrib.auth.models import UserManager
+from django.contrib.auth.models import UserManager, PermissionsMixin
 
 
-
-
-# We don't inherit from AbstractBaseUser because we don't want a password field
-class ConnectUser(models.Model):
+class ConnectUserMixin(models.Model):
+    """
+    A mixin class that holds fields necessary for IPS Connect
+    """
     id = models.IntegerField(primary_key=True) # no auto_increment
     username = models.CharField(max_length=255, unique=True)
     displayname = models.CharField(max_length=255, unique=True)
     email = models.EmailField(_('email address'), blank=True)
+    
+    class Meta:
+        abstract = True
+
+
+# We don't inherit from AbstractBaseUser because we don't want a password field
+class AbstractConnectUser(ConnectUserMixin, PermissionsMixin):
     is_staff = models.BooleanField(_('staff status'), default=False,
         help_text=_('Designates whether the user can log into this admin '
                     'site.'))
@@ -28,9 +35,12 @@ class ConnectUser(models.Model):
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['displayname', 'email']
     
+    connect_login_data = {} # A dict to store extra information that the backend receives
+    
     class Meta:
         verbose_name = _('user')
         verbose_name_plural = _('users')
+        abstract = True
         db_table = 'ipsconnect3_user'
         
     def get_username(self):
@@ -80,4 +90,9 @@ class ConnectUser(models.Model):
         Sends an email to this User.
         """
         send_mail(subject, message, from_email, [self.email])
+    
+    
+class ConnectUser(AbstractConnectUser):
+    class Meta(AbstractConnectUser.Meta):
+        swappable = 'AUTH_USER_MODEL'
 
