@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.utils.translation import ugettext, ugettext_lazy as _
 
@@ -78,8 +78,22 @@ class RegistrationForm(forms.Form, IPSCPasswordMixin):
     password2 = forms.CharField(label=_("Confirm Password"), widget=forms.PasswordInput(render_value=True),
                                 help_text=_("Enter the same password as above, for verification."))
 
+    # TODO: also check local database? or delete nonexisting user on login?
+
     def clean_username(self):
         username = self.cleaned_data.get('username')
+        # Checks the local database for a duplicate username
+        UserModel = get_user_model()
+        try:
+            user = UserModel.objects.get(username=username)
+        except UserModel.DoesNotExist:
+            pass
+        else:
+            raise forms.ValidationError(
+                self.error_messages['duplicate_username'],
+                code='duplicate_username',
+            )
+        # Checks the IPS Connect master for a duplicate username/displayname
         result = utils.request_check(username=username, displayname=username)
         if result.get('status') == 'SUCCESS':
             if result.get('username') == False or result.get('displayname') == False:
@@ -91,6 +105,18 @@ class RegistrationForm(forms.Form, IPSCPasswordMixin):
     
     def clean_email(self):
         email = self.cleaned_data.get('email')
+        # Checks the local database for a duplicate email
+        UserModel = get_user_model()
+        try:
+            user = UserModel.objects.get(email=email)
+        except UserModel.DoesNotExist:
+            pass
+        else:
+            raise forms.ValidationError(
+                self.error_messages['duplicate_email'],
+                code='duplicate_email',
+            )
+        # Checks the IPS Connect master for a duplicate email
         result = utils.request_check(email=email)
         if result.get('status') == 'SUCCESS' and result.get('email') == False:
             raise forms.ValidationError(
@@ -112,27 +138,7 @@ class RegistrationForm(forms.Form, IPSCPasswordMixin):
             )
         return password2
     
-    # def clean(self):
-    #     cleaned_data = super(RegistrationForm, self).clean()
-    #     username = cleaned_data.get('username')
-    #     displayname = username # Username and display name are the same for us
-    #     email = cleaned_data.get('email')
-    #
-    #     result = utils.request_check(username, displayname, email)
-    #     if result.get('status') == 'SUCCESS':
-    #         errors = []
-    #         if result.get('username') == False or result.get('displayname') == False:
-    #             errors.append(forms.ValidationError(
-    #                 self.error_messages['duplicate_username'],
-    #                 code='duplicate_username',
-    #             ))
-    #         if result.get('email') == False:
-    #             errors.append(forms.ValidationError(
-    #                 self.error_messages['duplicate_email'],
-    #                 code='duplicate_email',
-    #             ))
-    #         raise forms.ValidationError(errors)
-    #     else:
-    #         raise forms.ValidationError(_("There was a problem validating your registration."))
-    #     return cleaned_data
-
+    
+class ChallengeRegistrationForm(RegistrationForm):
+    # TODO
+    pass

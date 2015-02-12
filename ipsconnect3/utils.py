@@ -2,11 +2,14 @@ import base64
 import hashlib
 import requests
 import urllib
+import json
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 
+#
 # HTTP GET Requests
+#
 
 def request_base(params):
     url = settings.IPSCONNECT3_URL
@@ -44,9 +47,10 @@ def request_check(username='', displayname='', email=''):
         'email':        email,
     })
 
-def request_register(username, displayname, email, password, revalidateurl=''):
+def request_register(username, displayname, email, password, revalidate_url=''):
     key = settings.IPSCONNECT3_KEY
     password_hash = hashlib.md5(password).hexdigest()
+    revalidate_b64 = base64.b64encode(revalidate_url)
     return request_base({
         'act': 'register',
         'key':  key,
@@ -54,7 +58,7 @@ def request_register(username, displayname, email, password, revalidateurl=''):
         'displayname': displayname,
         'email': email,
         'password': password_hash,
-        'revalidateurl': revalidateurl,
+        'revalidateurl': revalidate_b64,
     })
 
 def request_validate(uid):
@@ -64,11 +68,28 @@ def request_validate(uid):
         'id': uid,
     })
     
-def request_change():
-    pass
+def request_change(uid, username='', displayname='', email='', password=''):
+    return request_base({
+        'act': 'change',
+        'id': uid,
+        'key': get_user_key_hash(uid),
+        'username': username,
+        'displayname': displayname,
+        'email': email,
+        'password': password,
+        # 'redirect': '',
+        # 'redirectHash': '',
+    })
     
-def request_delete():
-    pass
+def request_delete(uid):
+    # uid was meant to be an array, but I can't get that to work
+    # reliably with the IPS Connect master script
+    uid_json = json.dumps(uid)
+    return request_base({
+        'act': 'delete',
+        'id': uid,
+        'key': get_user_key_hash(uid_json)
+    })
 
 #
 # HTTP Redirects

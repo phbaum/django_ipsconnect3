@@ -10,15 +10,14 @@ from ipsconnect3.forms import LoginForm, RegistrationForm
 
 # Create your views here.
 def login(request, 
-          already_auth_url='main:home',
           success_url='main:home',
           template_name='main/login.html'):
     """
     doc
     """
-    # Send the user back to the already_auth_url if he is already authenticated
+    # Send the user back to the success_url if he is already authenticated
     if request.user.is_authenticated():
-        return redirect(already_auth_url)
+        return redirect(success_url)
     
     context = {}
     if 'next' in request.GET:
@@ -61,6 +60,7 @@ def logout(request, success_url='main:home'):
 
 def register(request, template_name='main/register.html', success_url='main:home'):
     """
+    View that registers the user with the IPS Connect master
     """
     context = {}
     if request.method == 'POST':
@@ -71,6 +71,7 @@ def register(request, template_name='main/register.html', success_url='main:home
             email = form.cleaned_data.get('email')
             password = form.cleaned_data.get('password2')
             
+            # TODO - move to function?
             # Register the user at the IPS Connect master
             result = utils.request_register(
                 username=username,
@@ -78,22 +79,27 @@ def register(request, template_name='main/register.html', success_url='main:home
                 email=email,
                 password=password,
             )
-            if result['status'] == 'SUCCESS':
+            if result.get('status') == 'SUCCESS':
                 # Create the user in our database
                 uid = int(result['id'])
-                model = get_user_model()
-                user = model.objects.create_user(
+                UserModel = get_user_model()
+                user = UserModel.objects.create_user(
                     id=uid,
                     username=username,
                     displayname=displayname,
                     email=email,
                 )
                 
-                # Also log the user in automatically
+                # Also log the user in after successful registration
                 authed_user = authenticate(username=username, password=password)
                 auth_login(request, authed_user)
+                id_type = 'id'
+                success_url = request.build_absolute_uri(resolve_url(success_url))
+                return utils.redirect_login(id_type, uid, password, success_url)
+            elif result.get('status') == 'FAIL':
+                raise Exception("Registering with the IPS Connect master failed")
             else:
-                pass
+                raise Exception("Unknown error during registration with the IPS Connect master")
             
             return redirect(success_url)
         else:
