@@ -49,6 +49,9 @@ class IPSConnect3Backend(object):
             )
             user.connect_login_data = result
             return user
+            
+        elif result.get('connect_status') == 'WRONG_AUTH':
+            return None
         
         elif result.get('connect_status') == 'NO_USER':
             if user is not None and settings.IPSCONNECT3_DELETE_MISSING:

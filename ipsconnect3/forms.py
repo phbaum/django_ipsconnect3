@@ -47,8 +47,17 @@ class LoginForm(forms.Form, IPSCPasswordMixin):
         user = authenticate(username=username, password=password)
         if user is None:
             raise forms.ValidationError(_("The username or password supplied is not valid."))
-        # elif not user.is_active:
-        #     raise forms.ValidationError("This user account is locked")
+            
+        elif not user.is_active:
+            if user.connect_login_data.get('connect_status') == 'VALIDATING':
+                error_msg = _("This account has not been validated yet.")
+            else:
+                error_msg = _("This user account is locked.")
+            raise forms.ValidationError(error_msg)
+            
+        elif user.is_banned:
+            raise forms.ValidationError(_("This account has been banned."))
+        
         self.user = user
         return cleaned_data
 
@@ -142,3 +151,7 @@ class RegistrationForm(forms.Form, IPSCPasswordMixin):
 class ChallengeRegistrationForm(RegistrationForm):
     # TODO
     pass
+
+
+class ActivationForm(forms.Form):
+    
