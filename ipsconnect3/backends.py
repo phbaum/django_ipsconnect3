@@ -2,13 +2,14 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth import get_user_model
 
-from ipsconnect3.models import ConnectUser
 from ipsconnect3 import utils
 
 class IPSConnect3Backend(object):
     """
     Authenticate against an IPS Connect 3 master
     """
+    DELETE_MISSING_USER = getattr(settings, 'IPSCONNECT3_DELETE_MISSING_USER', False)
+    
     def authenticate(self, username=None, password=None):
         UserModel = get_user_model()
         user = None
@@ -54,7 +55,7 @@ class IPSConnect3Backend(object):
             return None
         
         elif result.get('connect_status') == 'NO_USER':
-            if user is not None and settings.IPSCONNECT3_DELETE_MISSING:
+            if user is not None and self.DELETE_MISSING_USER:
                 # We have the user in the local database, but it's not in the master any more
                 # => Delete the user
                 user.delete()
@@ -68,9 +69,10 @@ class IPSConnect3Backend(object):
     
     
     def get_user(self, user_id):
+        UserModel = get_user_model()
         try:
-            return ConnectUser.objects.get(pk=user_id)
-        except ConnectUser.DoesNotExist:
+            return UserModel.objects.get(pk=user_id)
+        except UserModel.DoesNotExist:
             return None
             
     def _create_or_update_user(self, user=None, uid=None,
@@ -94,6 +96,5 @@ class IPSConnect3Backend(object):
             user.email = email
         if validating:
             user.is_active = False
-        # TODO - add validation system?
         user.save()
         return user

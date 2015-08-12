@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
+from django.shortcuts import resolve_url
 from django.utils.translation import ugettext, ugettext_lazy as _
 
 from ipsconnect3 import utils
@@ -50,7 +51,7 @@ class LoginForm(forms.Form, IPSCPasswordMixin):
             
         elif not user.is_active:
             if user.connect_login_data.get('connect_status') == 'VALIDATING':
-                error_msg = _("This account has not been validated yet.")
+                error_msg = _("This account has not been activated yet. Please follow the activation link sent to you by e-mail.")
             else:
                 error_msg = _("This user account is locked.")
             raise forms.ValidationError(error_msg)
@@ -153,5 +154,20 @@ class ChallengeRegistrationForm(RegistrationForm):
     pass
 
 
-class ActivationForm(forms.Form):
+class ReactivationForm(forms.Form):
+    username = forms.CharField(label=_("Login Name"), max_length=254)
     
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        UserModel = get_user_model()
+        try:
+            user = UserModel.objects.get(username=username)
+        except UserModel.DoesNotExist:
+            raise forms.ValidationError(_("No account found for this username."))
+        
+        if user.is_active:
+            raise forms.ValidationError(_("This account is already activated."))
+        self.user = user
+        return username
+            
+            
