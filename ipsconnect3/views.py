@@ -6,6 +6,7 @@ from django.contrib.sites.models import Site
 from django.core.urlresolvers import reverse
 # from django.http import HttpResponseRedirect
 from django.shortcuts import render, resolve_url, redirect
+from django.utils.http import is_safe_url
 from django.views.generic.edit import FormView
 
 from registration import signals
@@ -18,41 +19,43 @@ from ipsconnect3.forms import LoginForm, RegistrationForm, ReactivationForm
 
 
 # Create your views here.
-def login(request, 
-          success_url='main:home',
-          template_name='main/login.html'):
+class LoginView(FormView):
     """
-    doc
-    """
-    # Send the user back to the success_url if he is already authenticated
-    if request.user.is_authenticated():
-        return redirect(success_url)
     
-    context = {}
-    if 'next' in request.GET:
-        context['next'] = request.GET['next']
+    """
+    form_class = LoginForm
+    template_name = 'registration/login.html'
+    success_url = settings.LOGIN_REDIRECT_URL
+    redirect_field_name = REDIRECT_FIELD_NAME
+    current_app = None
+    
+    _redirect_to = ''
+    
+    def form_valid(self, form):
+        request = self.request
+        # logs the user in and creates the session
+        auth_login(request, form.user)
+        id_type = 'id'
+        uid = form.user.id
+        password = form.cleaned_data.get('password')
+            
+        # redirect to the IPS Connect master
+        redirect_url = request.build_absolute_uri(resolve_url(self._redirect_to))
+        return utils.redirect_login(id_type, uid, password, redirect_url)
         
-    if request.method == 'POST':
-        form = LoginForm(request.POST)
-        # authentication happens during form validation
-        if form.is_valid():
-            # logs the user in and creates the session
-            auth_login(request, form.user)
-            id_type = 'id'
-            uid = form.user.id
-            password = form.cleaned_data.get('password')
-            if 'next' in request.POST and request.POST['next'] != '':
-                redirect_url = request.POST['next']
-            else:
-                redirect_url = success_url
-            # redirect to the IPS Connect master
-            redirect_url = request.build_absolute_uri(resolve_url(redirect_url))
-            return utils.redirect_login(id_type, uid, password, redirect_url)
-    else:
-        form = LoginForm()
-    
-    context['form'] = form
-    return render(request, template_name, context)
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Handle the redirect for both GET and POST
+        """
+        self._redirect_to = request.REQUEST.get(self.redirect_field_name, '')
+        if not is_safe_url(url=self._redirect_to, host=request.get_host()):
+            self._redirect_to = resolve_url(self.success_url)
+        return super(LoginView, self).dispatch(request, *args, **kwargs)
+        
+    def get_context_data(self, **kwargs):
+        context = super(LoginView, self).get_context_data(**kwargs)
+        context[self.redirect_field_name] = self._redirect_to
+        return context
 
 
 def logout(request, success_url=settings.IPSCONNECT3_SUCCESS_URL):
@@ -65,34 +68,6 @@ def logout(request, success_url=settings.IPSCONNECT3_SUCCESS_URL):
         return utils.redirect_logout(user_id, success_url)
     else:
         return redirect(success_url)
-    
-        
-        
-class LoginView(FormView):
-    """
-    
-    """
-    form_class = LoginForm
-    template_name = 'registration/login.html'
-    success_url = settings.IPSCONNECT3_LOGIN_SUCCESS_URL
-    
-    def form_valid(self, form):
-        request = self.request
-        # logs the user in and creates the session
-        auth_login(request, form.user)
-        id_type = 'id'
-        uid = form.user.id
-        password = form.cleaned_data.get('password')
-        
-        # TODO: smarter redirect logic
-        if 'next' in request.POST and request.POST['next'] != '':
-            redirect_url = request.POST['next']
-        else:
-            redirect_url = self.success_url
-            
-        # redirect to the IPS Connect master
-        redirect_url = request.build_absolute_uri(resolve_url(redirect_url))
-        return utils.redirect_login(id_type, uid, password, redirect_url)
 
 
 class RegistrationView(BaseRegistrationView):
