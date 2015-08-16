@@ -9,6 +9,7 @@ class IPSConnect3Backend(object):
     Authenticate against an IPS Connect 3 master
     """
     DELETE_MISSING_USER = getattr(settings, 'IPSCONNECT3_DELETE_MISSING_USER', False)
+    MASTER_CAN_VALIDATE = getattr(settings, 'IPSCONNECT3_MASTER_CAN_VALIDATE', True)
     
     def authenticate(self, username=None, password=None):
         UserModel = get_user_model()
@@ -35,6 +36,7 @@ class IPSConnect3Backend(object):
                 username=result['connect_username'], 
                 displayname=result['connect_displayname'],
                 email=result['connect_email'],
+                validating=False,
             )
             user.connect_login_data = result
             return user
@@ -77,7 +79,7 @@ class IPSConnect3Backend(object):
             
     def _create_or_update_user(self, user=None, uid=None,
                                username=None, displayname=None,
-                               email=None, validating=False):
+                               email=None, validating=True):
         """
         Creates the user in the local database or updates
         the fields if a user with that id already exists.
@@ -94,7 +96,9 @@ class IPSConnect3Backend(object):
             user.username = username
             user.displayname = displayname
             user.email = email
-        if validating:
+        if validating == False and self.MASTER_CAN_VALIDATE:
+            user.is_active = True
+        else:
             user.is_active = False
         user.save()
         return user
