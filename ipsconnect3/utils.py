@@ -138,7 +138,7 @@ def get_combined_hash(thing):
     Returns an MD5 hash of the joined IPS Connect Key
     and the parameter thing
     """
-    return hashlib.md5('{}{}'.format(settings.IPSCONNECT3_KEY, thing)).hexdigest()
+    return hashlib.md5('{0}{1}'.format(settings.IPSCONNECT3_KEY, thing)).hexdigest()
 
 def get_user_key_hash(user_id):
     return get_combined_hash(user_id)
