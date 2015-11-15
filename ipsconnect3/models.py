@@ -50,7 +50,7 @@ class AbstractConnectUser(ConnectUserMixin, PermissionsMixin):
         "Return the identifying username for this User"
         return getattr(self, self.USERNAME_FIELD)
 
-    def __str__(self):
+    def __unicode__(self):
         return self.get_username()
 
     def natural_key(self):
