@@ -13,6 +13,9 @@ from django.http import HttpResponse, HttpResponseRedirect
 
 def request_base(params):
     url = settings.IPSCONNECT3_URL
+    # encode params with encoding of IPS Connect master
+    charset = getattr(settings, 'IPSCONNECT3_MASTER_CHARSET', 'utf-8')
+    params = {k: v.encode(charset) if isinstance(v, unicode) else v for k, v in params.items()}
     response = {}
     r = requests.get(url, params=params)
     if r.status_code == 200:
@@ -100,6 +103,9 @@ def redirect_base(params):
     Returns a HttpResponseRedirect
     """
     url = settings.IPSCONNECT3_URL
+    # encode params with encoding of IPS Connect master
+    charset = getattr(settings, 'IPSCONNECT3_MASTER_CHARSET', 'utf-8')
+    params = {k: v.encode(charset) if isinstance(v, unicode) else v for k, v in params.items()}
     param_string = urllib.urlencode(params)
     location = "{url}?{params}".format(url=url, params=param_string)
     return HttpResponseRedirect(location)
