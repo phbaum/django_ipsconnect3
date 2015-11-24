@@ -95,7 +95,8 @@ class RegistrationView(BaseRegistrationView):
             displayname=displayname,
             email=email,
             password=password,
-            revalidate_url=request.build_absolute_uri(resolve_url(self.revalidate_url))
+            revalidate_url=request.build_absolute_uri(resolve_url(self.revalidate_url)),
+            ip_address=utils.get_ip_address(request)
         )
         if result.get('status') == 'SUCCESS':
             # Create the user in our database
@@ -154,7 +155,7 @@ class ActivationView(BaseActivationView):
                                         user=activated_user,
                                         request=request)
             
-            result = utils.request_validate(uid=activated_user.id)
+            result = utils.request_validate(uid=activated_user.id, ip_address=utils.get_ip_address(request))
             if result.get('status') == 'SUCCESS':
                 return activated_user
             elif result.get('status') == 'NO_USER':

@@ -11,27 +11,31 @@ from django.http import HttpResponse, HttpResponseRedirect
 # HTTP GET Requests
 #
 
-def request_base(params):
+def request_base(params, ip_address=None):
     url = settings.IPSCONNECT3_URL
     # encode params with encoding of IPS Connect master
     charset = getattr(settings, 'IPSCONNECT3_MASTER_CHARSET', 'utf-8')
     params = {k: v.encode(charset) if isinstance(v, unicode) else v for k, v in params.items()}
+    if ip_address is not None:
+        headers = {'X-Forwarded-For': ip_address}
+    else:
+        headers = {}
     response = {}
-    r = requests.get(url, params=params)
+    r = requests.get(url, params=params, headers=headers)
     if r.status_code == 200:
         response = r.json()
     return response        
     
-def request_login(id_type, uid, password):
+def request_login(id_type, uid, password, ip_address=None):
     password_hash = hashlib.md5(password).hexdigest()
     return request_base({
         'act':      'login',
         'id':       uid,
         'idType':   id_type,
         'password': password_hash,
-    })
+    }, ip_address=ip_address)
 
-def request_check(username='', displayname='', email=''):
+def request_check(username='', displayname='', email='', ip_address=None):
     """
     Checks with the IPS Connect master application for duplicate values
     of username, displayname and email.
@@ -48,9 +52,9 @@ def request_check(username='', displayname='', email=''):
         'username':     username,
         'displayname':  displayname,
         'email':        email,
-    })
+    }, ip_address=ip_address)
 
-def request_register(username, displayname, email, password, revalidate_url=''):
+def request_register(username, displayname, email, password, revalidate_url='', ip_address=None):
     key = settings.IPSCONNECT3_KEY
     password_hash = hashlib.md5(password).hexdigest()
     revalidate_b64 = base64.b64encode(revalidate_url)
@@ -62,16 +66,16 @@ def request_register(username, displayname, email, password, revalidate_url=''):
         'email': email,
         'password': password_hash,
         'revalidateurl': revalidate_b64,
-    })
+    }, ip_address=ip_address)
 
-def request_validate(uid):
+def request_validate(uid, ip_address=None):
     return request_base({
         'act': 'validate',
         'key': get_user_key_hash(uid),
         'id': uid,
-    })
+    }, ip_address=ip_address)
     
-def request_change(uid, username='', displayname='', email='', password=''):
+def request_change(uid, username='', displayname='', email='', password='', ip_address=None):
     return request_base({
         'act': 'change',
         'id': uid,
@@ -82,9 +86,9 @@ def request_change(uid, username='', displayname='', email='', password=''):
         'password': password,
         # 'redirect': '',
         # 'redirectHash': '',
-    })
+    }, ip_address=ip_address)
     
-def request_delete(uid):
+def request_delete(uid, ip_address=None):
     # uid was meant to be an array, but I can't get that to work
     # reliably with the IPS Connect master script
     uid_json = json.dumps(uid)
@@ -92,7 +96,7 @@ def request_delete(uid):
         'act': 'delete',
         'id': uid,
         'key': get_user_key_hash(uid_json)
-    })
+    }, ip_address=ip_address)
 
 #
 # HTTP Redirects
@@ -152,3 +156,11 @@ def get_user_key_hash(user_id):
 def get_redirect_hash(redirect):
     return get_combined_hash(redirect)
 
+
+
+def get_ip_address(request):
+    """
+    Returns the client IP address
+    Could be extended with proxy checking or with django-ipware
+    """
+    return request.META['REMOTE_ADDR']

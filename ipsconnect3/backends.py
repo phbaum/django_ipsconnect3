@@ -26,7 +26,7 @@ class IPSConnect3Backend(object):
             uid = user.id
             id_type = 'id'
 
-        result = utils.request_login(id_type, uid, password)
+        result = utils.request_login(id_type, uid, password, ip_address=utils.get_ip_address(request))
         
         if result.get('connect_status') == 'SUCCESS':
             # Update or create the user in the database.
