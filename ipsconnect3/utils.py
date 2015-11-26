@@ -14,7 +14,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 def request_base(params, ip_address=None):
     url = settings.IPSCONNECT3_URL
     # encode params with encoding of IPS Connect master
-    charset = getattr(settings, 'IPSCONNECT3_MASTER_CHARSET', 'utf-8')
+    charset = get_master_charset()
     params = {k: v.encode(charset) if isinstance(v, unicode) else v for k, v in params.items()}
     if ip_address is not None:
         headers = {'X-Forwarded-For': ip_address}
@@ -27,7 +27,9 @@ def request_base(params, ip_address=None):
     return response        
     
 def request_login(id_type, uid, password, ip_address=None):
-    password_hash = hashlib.md5(password).hexdigest()
+    charset = get_master_charset()
+    pasword_bytes = password.encode(charset)
+    password_hash = hashlib.md5(pasword_bytes).hexdigest()
     return request_base({
         'act':      'login',
         'id':       uid,
@@ -56,7 +58,9 @@ def request_check(username='', displayname='', email='', ip_address=None):
 
 def request_register(username, displayname, email, password, revalidate_url='', ip_address=None):
     key = settings.IPSCONNECT3_KEY
-    password_hash = hashlib.md5(password).hexdigest()
+    charset = get_master_charset()
+    pasword_bytes = password.encode(charset)
+    password_hash = hashlib.md5(pasword_bytes).hexdigest()
     revalidate_b64 = base64.b64encode(revalidate_url)
     return request_base({
         'act': 'register',
@@ -108,14 +112,16 @@ def redirect_base(params):
     """
     url = settings.IPSCONNECT3_URL
     # encode params with encoding of IPS Connect master
-    charset = getattr(settings, 'IPSCONNECT3_MASTER_CHARSET', 'utf-8')
+    charset = get_master_charset()
     params = {k: v.encode(charset) if isinstance(v, unicode) else v for k, v in params.items()}
     param_string = urllib.urlencode(params)
     location = "{url}?{params}".format(url=url, params=param_string)
     return HttpResponseRedirect(location)
     
 def redirect_login(id_type, uid, password, redirect_url):
-    password_hash = hashlib.md5(password).hexdigest()
+    charset = get_master_charset()
+    pasword_bytes = password.encode(charset)
+    password_hash = hashlib.md5(pasword_bytes).hexdigest()
     redirect_b64 = base64.b64encode(redirect_url)
     return redirect_base({
         'act': 'login',
@@ -142,12 +148,14 @@ def redirect_logout(user_id, redirect_url):
 
 
 
-
 def get_combined_hash(thing):
     """
     Returns an MD5 hash of the joined IPS Connect Key
     and the parameter thing
     """
+    if isinstance(thing, unicode):
+        charset = get_master_charset()
+        thing = thing.encode(charset)
     return hashlib.md5('{0}{1}'.format(settings.IPSCONNECT3_KEY, thing)).hexdigest()
 
 def get_user_key_hash(user_id):
@@ -157,6 +165,8 @@ def get_redirect_hash(redirect):
     return get_combined_hash(redirect)
 
 
+def get_master_charset():
+    return getattr(settings, 'IPSCONNECT3_MASTER_CHARSET', 'utf-8')
 
 def get_ip_address(request):
     """
