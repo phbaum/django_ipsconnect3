@@ -5,6 +5,11 @@ from ipsconnect3.models import ConnectUser
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, ReadOnlyPasswordHashField
 
+from django.contrib.admin.sites import NotRegistered
+from registration.models import RegistrationProfile
+from registration.admin import RegistrationAdmin
+from registration.users import UsernameField
+
 
 class ConnectUserChangeForm(UserChangeForm):
     password = ReadOnlyPasswordHashField(label="Password",
@@ -32,10 +37,27 @@ class ConnectUserAdmin(UserAdmin):
     )
     list_display = ('username', 'id', 'displayname', 'email', 'is_staff', 'is_superuser', 'is_active', 'is_banned')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'is_banned', 'groups')
-    search_fields = ('username', 'displayname', 'email')
+    search_fields = ('username', 'displayname', 'email', 'id')
     ordering = ('id',)
     
     form = ConnectUserChangeForm
     add_fieldsets = () # disable adding Users through the Admin
 
 admin.site.register(ConnectUser, ConnectUserAdmin)
+
+
+# Fix RegistrationAdmin search fields
+class ConnectRegistrationAdmin(RegistrationAdmin):
+    def user_id(obj):
+        return obj.user.id
+    user_id.admin_order_field = 'user__id'
+    
+    list_display = ('user', user_id, 'activation_key_expired')
+    search_fields = ('user__{0}'.format(UsernameField()),
+                         'user__displayname', 'user__id')
+
+try:
+    admin.site.unregister(RegistrationProfile)
+except NotRegistered:
+    pass
+admin.site.register(RegistrationProfile, ConnectRegistrationAdmin)
