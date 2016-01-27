@@ -1,8 +1,7 @@
 from django.conf import settings
 # Avoid shadowing the login() and logout() views below.
 from django.contrib.auth import login as auth_login, logout as auth_logout, get_user_model, authenticate, REDIRECT_FIELD_NAME
-from django.contrib.sites.models import RequestSite
-from django.contrib.sites.models import Site
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.urlresolvers import reverse
 # from django.http import HttpResponseRedirect
 from django.shortcuts import render, resolve_url, redirect
@@ -110,10 +109,7 @@ class RegistrationView(BaseRegistrationView):
             )
             
             # Django Sites logic
-            if Site._meta.installed:
-                site = Site.objects.get_current()
-            else:
-                site = RequestSite(request)
+            site = get_current_site(request)
                      
             new_user = RegistrationProfile.objects.create_inactive_user(
                 new_user=new_user_instance,
