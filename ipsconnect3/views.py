@@ -46,7 +46,10 @@ class LoginView(FormView):
         """
         Handle the redirect for both GET and POST
         """
-        self._redirect_to = request.REQUEST.get(self.redirect_field_name, '')
+        if request.method == 'POST':
+            self._redirect_to = request.POST.get(self.redirect_field_name, '')
+        else:
+            self._redirect_to = request.GET.get(self.redirect_field_name, '')
         if not is_safe_url(url=self._redirect_to, host=request.get_host()):
             self._redirect_to = resolve_url(self.success_url)
         return super(LoginView, self).dispatch(request, *args, **kwargs)
