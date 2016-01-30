@@ -1,4 +1,4 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.conf import settings
 from django.views.generic.base import TemplateView
 
@@ -6,7 +6,7 @@ from ipsconnect3 import views
 
 success_url = settings.IPSCONNECT3_SUCCESS_URL
 
-urlpatterns = patterns('',
+urlpatterns = [
     # url(r'^login/$', views.login, {'success_url':success_url, 'template_name':'registration/login.html',}, name='login'),
     url(r'^login/$', 
         views.LoginView.as_view(), 
@@ -41,4 +41,4 @@ urlpatterns = patterns('',
     url(r'^reactivate/complete/$', 
         TemplateView.as_view(template_name='registration/reactivation_complete.html'), 
         name='registration_reactivation_complete'),
-)
+]
