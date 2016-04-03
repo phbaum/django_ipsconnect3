@@ -95,7 +95,10 @@ class IPSConnect3Backend(object):
         else:
             user.username = username
             user.displayname = displayname
-            user.email = email
+            if email:
+                # Do not update to an empty e-mail address when validating,
+                # otherwise re-sending the activation link will fail
+                user.email = email
         if validating == False and self.MASTER_CAN_VALIDATE:
             user.is_active = True
         else:
