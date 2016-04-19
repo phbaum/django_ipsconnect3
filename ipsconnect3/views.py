@@ -180,10 +180,7 @@ class ReactivationView(FormView):
         user = form.user
         request = self.request
         # Django Sites logic
-        if Site._meta.installed:
-            site = Site.objects.get_current()
-        else:
-            site = RequestSite(request)
+        site = get_current_site(request)
         
         # Delete existing registration profile for this user
         try:
