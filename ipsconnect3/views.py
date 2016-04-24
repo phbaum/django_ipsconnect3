@@ -31,15 +31,14 @@ class LoginView(FormView):
     _redirect_to = ''
     
     def form_valid(self, form):
-        request = self.request
         # logs the user in and creates the session
-        auth_login(request, form.user)
+        auth_login(self.request, form.user)
         id_type = 'id'
         uid = form.user.id
         password = form.cleaned_data.get('password')
             
         # redirect to the IPS Connect master
-        redirect_url = request.build_absolute_uri(resolve_url(self._redirect_to))
+        redirect_url = self.request.build_absolute_uri(resolve_url(self._redirect_to))
         return utils.redirect_login(id_type, uid, password, redirect_url)
         
     def dispatch(self, request, *args, **kwargs):
@@ -82,7 +81,7 @@ class RegistrationView(BaseRegistrationView):
     success_url = 'ipsconnect3:registration_complete'
     revalidate_url = 'ipsconnect3:registration_reactivate'
     
-    def register(self, request, form):
+    def register(self, form):
         """
         """
         username = form.cleaned_data.get('username')
@@ -97,8 +96,8 @@ class RegistrationView(BaseRegistrationView):
             displayname=displayname,
             email=email,
             password=password,
-            revalidate_url=request.build_absolute_uri(resolve_url(self.revalidate_url)),
-            ip_address=utils.get_ip_address(request)
+            revalidate_url=self.request.build_absolute_uri(resolve_url(self.revalidate_url)),
+            ip_address=utils.get_ip_address(self.request)
         )
         if result.get('status') == 'SUCCESS':
             # Create the user in our database
@@ -112,17 +111,17 @@ class RegistrationView(BaseRegistrationView):
             )
             
             # Django Sites logic
-            site = get_current_site(request)
+            site = get_current_site(self.request)
                      
             new_user = RegistrationProfile.objects.create_inactive_user(
                 new_user=new_user_instance,
                 site=site,
                 send_email=self.SEND_ACTIVATION_EMAIL,
-                request=request,
+                request=self.request,
             )
             signals.user_registered.send(sender=self.__class__,
                                          user=new_user,
-                                         request=request)
+                                         request=self.request)
             return new_user
             
         elif result.get('status') == 'FAIL':
@@ -137,7 +136,7 @@ class ActivationView(BaseActivationView):
     """
     success_url = 'ipsconnect3:registration_activation_complete'
     
-    def activate(self, request, activation_key):
+    def activate(self, activation_key):
         """
         Given an an activation key, look up and activate the user
         account corresponding to that key (if possible).
@@ -152,9 +151,9 @@ class ActivationView(BaseActivationView):
         if activated_user:
             signals.user_activated.send(sender=self.__class__,
                                         user=activated_user,
-                                        request=request)
+                                        request=self.request)
             
-            result = utils.request_validate(uid=activated_user.id, ip_address=utils.get_ip_address(request))
+            result = utils.request_validate(uid=activated_user.id, ip_address=utils.get_ip_address(self.request))
             if result.get('status') == 'SUCCESS':
                 return activated_user
             elif result.get('status') == 'NO_USER':
@@ -163,7 +162,7 @@ class ActivationView(BaseActivationView):
                 raise Exception("Invalid IPS Connect master key")
         return None
 
-    def get_success_url(self, request, user):
+    def get_success_url(self, user):
         return self.success_url
     
 
@@ -178,9 +177,8 @@ class ReactivationView(FormView):
         
     def form_valid(self, form):
         user = form.user
-        request = self.request
         # Django Sites logic
-        site = get_current_site(request)
+        site = get_current_site(self.request)
         
         # Delete existing registration profile for this user
         try:
@@ -191,15 +189,15 @@ class ReactivationView(FormView):
             registration_profile.delete()
         
         registration_profile = RegistrationProfile.objects.create_profile(user)
-        registration_profile.send_activation_email(site, request)
+        registration_profile.send_activation_email(site, self.request)
         
-        success_url = self.get_success_url(request, user)
+        success_url = self.get_success_url(user)
         try:
             to, args, kwargs = success_url
             return redirect(to, *args, **kwargs)
         except ValueError:
             return redirect(success_url)
             
-    def get_success_url(self, request, user): 
+    def get_success_url(self, user): 
         return self.success_url
             
