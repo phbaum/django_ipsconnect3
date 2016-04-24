@@ -1,11 +1,14 @@
 from django.contrib import admin
+from django.utils.translation import ugettext_lazy as _
 
 # Register your models here.
 from ipsconnect3.models import ConnectUser
+from ipsconnect3 import utils
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserChangeForm, ReadOnlyPasswordHashField
 
 from django.contrib.admin.sites import NotRegistered
+from registration import signals
 from registration.models import RegistrationProfile
 from registration.admin import RegistrationAdmin
 from registration.users import UsernameField
@@ -55,6 +58,47 @@ class ConnectRegistrationAdmin(RegistrationAdmin):
     list_display = ('user', user_id, 'activation_key_expired')
     search_fields = ('user__{0}'.format(UsernameField()),
                          'user__displayname', 'user__id')
+                         
+    def activate_users(self, request, queryset):
+        """
+        Activates the selected users if they are not already
+        activated.
+        Overrides the RegistrationAdmin method with an API call
+        to the IPS Connect 3 master.
+        """
+        users_activated = 0
+        for profile in queryset:
+            error = ""
+            result = utils.request_validate(uid=profile.user.id, ip_address=utils.get_ip_address(request))
+            if result.get('status') == 'SUCCESS':
+                activated_user = RegistrationProfile.objects.activate_user(profile.activation_key)
+                if activated_user:
+                    signals.user_activated.send(sender=self.__class__,
+                                                user=activated_user,
+                                                request=request)
+                    users_activated += 1
+                else:
+                    error = "There was a problem with the Registration Profile"
+                    
+            elif result.get('status') == 'NO_USER':
+                error = "The user was not found in the IPS Connect master database"
+            elif result.get('status') == 'BAD_KEY':
+                error = "The IPS Connect master key was invalid"
+
+            if error:
+                self.message_user(
+                    request,
+                    "Failed to activate user '{user}'. {error}.".format(
+                        user=profile.user.displayname, error=error
+                    ),
+                    level='ERROR'
+                )
+                break
+        if users_activated > 0:
+            bit = "users were" if users_activated > 1 else "user was"
+            self.message_user(request, "{num} {users} successfully activated.".format(num=users_activated, users=bit))
+    activate_users.short_description = _("Activate users")
+    
 
 try:
     admin.site.unregister(RegistrationProfile)
