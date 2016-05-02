@@ -12,6 +12,9 @@ class IPSConnect3Backend(object):
     MASTER_CAN_VALIDATE = getattr(settings, 'IPSCONNECT3_MASTER_CAN_VALIDATE', True)
     
     def authenticate(self, username=None, password=None):
+        if username is None or password is None:
+            return None
+        
         UserModel = get_user_model()
         user = None
         uid = None
