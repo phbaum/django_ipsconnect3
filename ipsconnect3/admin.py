@@ -31,6 +31,7 @@ class ConnectUserAdmin(UserAdmin):
     A version of UserAdmin modified to account for
     the fields on ConnectUser that differ from User
     """
+    actions = ['ban_users', 'unban_users']
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
         ('Personal info', {'fields': ('displayname', 'email')}),
@@ -45,7 +46,25 @@ class ConnectUserAdmin(UserAdmin):
     
     form = ConnectUserChangeForm
     add_fieldsets = () # disable adding Users through the Admin
-
+    
+    def ban_users(self, request, queryset):
+        rows_updated = queryset.update(is_banned=True)
+        if rows_updated == 1:
+            message_bit = "1 user was"
+        else:
+            message_bit = "{} users were".format(rows_updated)
+        self.message_user(request, "{} successfully banned.".format(message_bit))
+    ban_users.short_description = _("Ban selected users")
+    
+    def unban_users(self, request, queryset):
+        rows_updated = queryset.update(is_banned=False)
+        if rows_updated == 1:
+            message_bit = "1 user was"
+        else:
+            message_bit = "{} users were".format(rows_updated)
+        self.message_user(request, "{} successfully unbanned.".format(message_bit))
+    unban_users.short_description = _("Unban selected users")
+    
 admin.site.register(ConnectUser, ConnectUserAdmin)
 
 
