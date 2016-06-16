@@ -38,7 +38,7 @@ class IPSCPasswordMixin:
     
 
 class LoginForm(forms.Form, IPSCPasswordMixin):
-    username = forms.CharField(label=_("Login Name"), max_length=254)
+    username = forms.CharField(label=_("Username"), max_length=254)
     password = forms.CharField(label=_("Password"), widget=forms.PasswordInput)
     
     def clean(self):
