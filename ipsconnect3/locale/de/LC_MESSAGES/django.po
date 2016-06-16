@@ -1,0 +1,152 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-06-16 01:05+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: admin.py:57
+msgid "Ban selected users"
+msgstr "Ausgewählte Benutzer verbannen"
+
+#: admin.py:66
+msgid "Unban selected users"
+msgstr "Ausgewählte Benutzer un-verbannen"
+
+#: admin.py:119
+msgid "Activate users"
+msgstr "Benutzer aktivieren"
+
+#: forms.py:41 forms.py:158
+msgid "Login Name"
+msgstr "Login-Name"
+
+#: forms.py:42 forms.py:86
+msgid "Password"
+msgstr "Passwort"
+
+#: forms.py:50
+msgid "The username or password supplied is not valid."
+msgstr "Der Benutzername oder das Passwort ist ungültig."
+
+#: forms.py:54
+msgid ""
+"This account has not been activated yet. Please follow the activation link "
+"sent to you by e-mail."
+msgstr ""
+"Dieses Konto wurde noch nicht aktiviert. Bitte folge dem Aktivierungslink, der dir per E-Mail gesendet wurde."
+
+#: forms.py:56
+msgid "This user account is locked."
+msgstr "Dieses Benutzerkonto ist geschlossen."
+
+#: forms.py:60
+msgid "This account has been banned."
+msgstr "Dieses Konto wurde verbannt."
+
+#: forms.py:71
+msgid "This username is already taken."
+msgstr "Dieser Benutzername ist bereits vergeben."
+
+#: forms.py:72
+msgid "This e-mail address is already taken."
+msgstr "Diese E-Mail Adresse ist bereits vergeben."
+
+#: forms.py:73
+msgid "The two password fields didn't match."
+msgstr "Die zwei Passwortfelder stimmen nicht überein."
+
+#: forms.py:76
+msgid "Username"
+msgstr "Benutzername"
+
+#: forms.py:80
+msgid ""
+"Required. Between 3 and 26 characters. Letters, digits and @/./+/-/_ only."
+msgstr ""
+"Pflichtfeld. Zwischen 3 und 26 Zeichen. Nur Buchstaben, Zahlen und @/./+/-/_."
+
+#: forms.py:83
+msgid "This value may contain only letters, numbers and @/./+/-/_ characters."
+msgstr ""
+"Dieser Wert darf nur Buchstaben, Zahlen und die Zeichen @/./+/-/_ enthalten."
+
+#: forms.py:85
+msgid "E-mail"
+msgstr "E-Mail"
+
+#: forms.py:88
+msgid "Confirm Password"
+msgstr "Passwort bestätigen"
+
+#: forms.py:89
+msgid "Enter the same password as above, for verification."
+msgstr "Gleiches Passwort wie oben, zur Überprüfung."
+
+#: forms.py:166
+msgid "No account found for this username."
+msgstr "Kein Konto gefunden für diesen Benutzernamen."
+
+#: forms.py:169
+msgid "This account is already activated."
+msgstr "Dieses Konto wurde bereits aktiviert."
+
+#: models.py:16
+msgid "email address"
+msgstr "E-Mail Adresse"
+
+#: models.py:24
+msgid "staff status"
+msgstr "Personalstatus"
+
+#: models.py:25
+msgid "Designates whether the user can log into this admin site."
+msgstr "Zeigt an, ob sich der Benutzer bei der Administrationsseite anmelden kann."
+
+#: models.py:27
+msgid "active"
+msgstr "aktiv"
+
+#: models.py:28
+msgid ""
+"Designates whether this user should be treated as active. Unselect this "
+"instead of deleting accounts."
+msgstr ""
+"Zeig an, ob dieser Benutzer als aktiv behandelt werden soll. Deselektiere dies, anstatt Konten zu löschen."
+
+#: models.py:30
+msgid "banned"
+msgstr "verbannt"
+
+#: models.py:31
+msgid "Designates whether this user should be treated as banned."
+msgstr "Zeigt an, ob der Benutzer als verbannt behandelt werden soll."
+
+#: models.py:33
+msgid "last login"
+msgstr "letzte Anmeldung"
+
+#: models.py:34
+msgid "date joined"
+msgstr "Beitrittsdatum"
+
+#: models.py:44
+msgid "user"
+msgstr "Benutzer"
+
+#: models.py:45
+msgid "users"
+msgstr "Benutzer"
