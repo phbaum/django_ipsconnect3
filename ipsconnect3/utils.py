@@ -171,6 +171,9 @@ def get_master_charset():
 def get_ip_address(request):
     """
     Returns the client IP address
-    Could be extended with proxy checking or with django-ipware
+    Could be extended with django-ipware
     """
+    if getattr(settings, 'IPSCONNECT3_USE_X_FORWARDED_FOR', False) and (
+        'HTTP_X_FORWARDED_FOR' in request.META):
+        return request.META['HTTP_X_FORWARDED_FOR']
     return request.META['REMOTE_ADDR']
